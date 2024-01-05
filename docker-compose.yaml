@@ -4,9 +4,9 @@ version: '3.9'
 # в этом блоке мы описываем контейнеры, которые будут запускаться
 services:
   web: #контейнер с Nginx
-    #build: # создать docker-образ из dockerFile
-      #context: ./nginx # путь в контексте которого будет создан docker-образ
-      #dockerfile: Dockerfile # путь до dockerFile из которого будет собран docker-образ
+    build: # создать docker-образ из dockerFile
+      context: ./nginx # путь в контексте которого будет создан docker-образ
+      dockerfile: Dockerfile # путь до dockerFile из которого будет собран docker-образ
     image: nginx:latest
     container_name: nginx # имя docker-контейнера
     ports:  # проброс портов
@@ -18,6 +18,7 @@ services:
       - php-fpm
     networks: # имя сети к котором будет подключен docker-контейнер
       - app-network
+
   php-fpm: #Контейнер с PHP-FPM, назовём его php-fpm
     # Если нет секции build, то система будет искать образ в репозиториях
     build: # создать docker-образ из dockerFile
@@ -27,12 +28,13 @@ services:
     container_name: php-fpm # имя контейнера после запуска
     volumes: #  монтирование директорий, директория-на-хост-машине:директория-в-докере
        - ./code:/data/mysite.local
+       - ./fpm/php.ini:/usr/local/etc/php/conf.d/php-custom.ini
     depends_on: # данный сервис будет запущен только после запуска сервиса под именем db
        - db
     networks: # имя сети к котором будет подключен docker-контейнер
       - app-network
 
-  # контейнер с MySQL
+  # контейнер с MySQL | Postgres
   # строим на базе стандартного образа
   db:
     image: postgres:14.1-alpine # тэг docker-образа из https://hub.docker.com/
@@ -48,6 +50,17 @@ services:
       - ./dbdata:/var/lib/mysql  
     networks:
       - app-network
+  # Консльное прилижение работает как CLI необходимо composer
+  workspace:
+    image: php:8-cli
+    container_name: console
+    working_dir: /data/mysite.local
+    volumes:
+      - ./code:/data/mysite.local
+    networks:
+      - app-network
+    depends_on: # данный сервис будет запущен только после запуска сервиса под именем php-fpm
+      - web
 
 # явно объявленные сети
 networks:
