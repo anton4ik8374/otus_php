@@ -2,7 +2,11 @@ FROM ubuntu:latest
 
 RUN apt-get update  
 
-RUN apt-get install -y nginx  
+RUN apt-get install -y nginx
+
+ENV TZ=Europe/Moscow
+
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 COPY ./hosts/mysite.local.conf /etc/nginx/sites-enabled/mysite.local.conf
 
